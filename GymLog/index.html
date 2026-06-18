@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymLog — Your Workout Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --surface2: #1e1e28;
+    --surface3: #25252f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --accent: #7c6fe0;
+    --accent-light: #a99ef5;
+    --accent-dim: rgba(124,111,224,0.15);
+    --accent-dim2: rgba(124,111,224,0.25);
+    --green: #3ecf8e;
+    --green-dim: rgba(62,207,142,0.15);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.14);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; min-height: 100vh; line-height: 1.5; }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; gap: 8px; overflow-y: auto; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { padding: 20px 28px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .content { flex: 1; overflow-y: auto; padding: 20px 28px 28px; display: flex; gap: 20px; }
+  .cal-col { flex: 1; min-width: 0; }
+  .detail-col { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+
+  .logo { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; padding: 4px 8px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius); color: var(--text2); font-size: 13.5px; cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: var(--font-body); }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent-light); }
+  .nav-item i { font-size: 17px; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  .stat-mini { padding: 12px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); }
+  .stat-mini-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-mini-row { display: flex; gap: 12px; }
+  .stat-mini-item { flex: 1; }
+  .stat-mini-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+  .stat-mini-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .streak-section { padding: 12px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); }
+  .streak-dots { display: flex; gap: 5px; margin-top: 6px; }
+  .streak-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--surface3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text3); }
+  .streak-dot.done { background: var(--accent-dim2); border-color: var(--accent); color: var(--accent-light); }
+  .streak-day { font-size: 9px; text-align: center; color: var(--text3); margin-top: 3px; }
+  .streak-col { display: flex; flex-direction: column; align-items: center; }
+
+  .page-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 1px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; font-family: var(--font-body); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6c5fd0; }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface3); color: var(--text); }
+  .btn-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(62,207,142,0.3); }
+  .btn-green:hover { background: rgba(62,207,142,0.25); }
+  .btn-green.checked { background: var(--green); color: #0f1a12; }
+  .btn-disabled { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); cursor: not-allowed; opacity: 0.6; }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+  .btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .month-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-header-cell { font-size: 11px; color: var(--text3); text-align: center; padding: 4px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .cal-day { aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; border: 1px solid transparent; position: relative; transition: all 0.12s; gap: 2px; }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.other-month { color: var(--text3); }
+  .cal-day.today { border-color: var(--accent); color: var(--accent-light); font-weight: 600; }
+  .cal-day.has-workout::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--accent-light); }
+  .cal-day.checked-in { background: var(--accent-dim); }
+  .cal-day.checked-in.today { border-color: var(--accent); }
+  .cal-day.selected { background: var(--accent-dim2); border-color: var(--accent); }
+  .cal-day.future-day { opacity: 0.45; }
+
+  .cal-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text2); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+  .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .detail-date { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+  .detail-empty { text-align: center; padding: 32px 0; color: var(--text3); }
+  .detail-empty i { font-size: 36px; display: block; margin-bottom: 8px; }
+  .detail-empty p { font-size: 13px; margin-bottom: 12px; }
+
+  .workout-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+  .tag-recurring { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,158,11,0.25); }
+
+  .exercise-list { display: flex; flex-direction: column; gap: 1px; }
+  .exercise-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius); font-size: 13px; transition: background 0.1s; }
+  .exercise-row:hover { background: var(--surface2); }
+  .ex-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .ex-name { flex: 1; color: var(--text); }
+  .ex-detail { color: var(--text3); font-size: 12px; }
+  .ex-muscle { font-size: 11px; color: var(--text3); padding: 2px 7px; background: var(--surface3); border-radius: 20px; }
+
+  .checkin-area { padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
+  .notes-input { width: 100%; padding: 8px 10px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--font-body); font-size: 13px; resize: none; outline: none; }
+  .notes-input::placeholder { color: var(--text3); }
+  .notes-input:focus { border-color: var(--accent); }
+  .notes-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .future-notice { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.2); font-size: 12.5px; color: var(--amber); }
+
+  /* Weekly schedule builder */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+  .day-col { display: flex; flex-direction: column; gap: 6px; }
+  .day-col-label { font-size: 11px; color: var(--text3); text-align: center; text-transform: uppercase; letter-spacing: 0.04em; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .day-slot { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 4px; text-align: center; font-size: 11px; color: var(--text3); min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; transition: all 0.12s; position: relative; }
+  .day-slot:hover { border-color: var(--accent); color: var(--accent-light); }
+  .day-slot.has-template { background: var(--accent-dim); border-color: rgba(124,111,224,0.3); color: var(--accent-light); }
+  .day-slot.rest { background: var(--surface3); color: var(--text3); border-style: dashed; }
+  .day-slot-name { font-size: 10px; font-weight: 500; }
+  .day-slot-del { position: absolute; top: 2px; right: 2px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 12px; line-height: 1; padding: 1px; opacity: 0; transition: opacity 0.1s; }
+  .day-slot:hover .day-slot-del { opacity: 1; }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 24px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+  .modal-close { float: right; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; margin-top: -2px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-input, .form-select { width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: 13.5px; outline: none; }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-select option { background: var(--surface); }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  .exercise-builder { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .exercise-builder-title { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .ex-entry { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .ex-entry:last-child { border-bottom: none; }
+  .ex-entry-name { flex: 1; font-size: 13px; color: var(--text); }
+  .ex-entry-info { font-size: 12px; color: var(--text3); }
+  .add-ex-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .add-ex-form input, .add-ex-form select { padding: 7px 10px; background: var(--surface3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12.5px; font-family: var(--font-body); outline: none; }
+  .add-ex-form input:focus, .add-ex-form select:focus { border-color: var(--accent); }
+  .add-ex-form input[placeholder="Exercise"] { flex: 1; min-width: 120px; }
+
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  .recur-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); cursor: pointer; margin-bottom: 14px; }
+  .toggle-switch { width: 36px; height: 20px; border-radius: 10px; background: var(--surface3); border: 1px solid var(--border2); position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch.on { background: var(--accent); border-color: var(--accent); }
+  .toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text3); transition: all 0.2s; }
+  .toggle-switch.on .toggle-knob { left: 18px; background: #fff; }
+  .recur-label { font-size: 13px; color: var(--text2); }
+  .recur-label strong { color: var(--text); }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 18px; font-size: 13.5px; z-index: 200; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast i { color: var(--green); font-size: 16px; }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-purple { background: var(--accent-dim); color: var(--accent-light); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+
+  .schedule-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .info-box { padding: 10px 12px; border-radius: var(--radius); background: var(--accent-dim); border: 1px solid rgba(124,111,224,0.2); font-size: 12.5px; color: var(--accent-light); display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 200px; padding: 16px 12px; }
+    .content { flex-direction: column; }
+    .detail-col { width: 100%; }
+  }
+  @media (max-width: 640px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; padding: 12px; gap: 4px; }
+    .logo { width: 100%; margin-bottom: 0; }
+    .main { overflow: auto; }
+    .content { flex-direction: column; padding: 14px; }
+    .detail-col { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-dot"></span> GymLog</div>
+    <button class="nav-item active" onclick="switchTab('calendar')"><i class="ti ti-calendar"></i> Calendar</button>
+    <button class="nav-item" onclick="switchTab('schedule')"><i class="ti ti-repeat"></i> Weekly schedule</button>
+    <button class="nav-item" onclick="switchTab('workouts')"><i class="ti ti-dumbbell"></i> All workouts</button>
+    <button class="nav-item" onclick="switchTab('progress')"><i class="ti ti-chart-bar"></i> Progress</button>
+    <div class="sidebar-divider"></div>
+    <div class="streak-section">
+      <div class="stat-mini-label">This week</div>
+      <div class="streak-dots" id="streakDots"></div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-label">Stats</div>
+      <div class="stat-mini-row">
+        <div class="stat-mini-item"><div class="stat-mini-num" id="statMonth">0</div><div class="stat-mini-sub">This month</div></div>
+        <div class="stat-mini-item"><div class="stat-mini-num" id="statStreak">0</div><div class="stat-mini-sub">Day streak 🔥</div></div>
+      </div>
+      <div class="stat-mini-row" style="margin-top:10px">
+        <div class="stat-mini-item"><div class="stat-mini-num" id="statTotal">0</div><div class="stat-mini-sub">Total sessions</div></div>
+        <div class="stat-mini-item"><div class="stat-mini-num" id="statRate">—</div><div class="stat-mini-sub">Completion</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="topTitle">Calendar</div>
+        <div class="page-sub" id="topSub">Track and check in to your workouts</div>
+      </div>
+      <button class="btn btn-primary" onclick="openAddWorkout(null, false)"><i class="ti ti-plus"></i> Add workout</button>
+    </div>
+
+    <!-- Calendar tab -->
+    <div class="content" id="tabCalendar">
+      <div class="cal-col">
+        <div class="card">
+          <div class="month-nav">
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="prevMonth()"><i class="ti ti-chevron-left"></i></button>
+            <div class="month-title" id="monthTitle"></div>
+            <button class="btn btn-ghost btn-icon btn-sm" onclick="nextMonth()"><i class="ti ti-chevron-right"></i></button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--accent-dim);border:1px solid var(--accent)"></div> Checked in</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--surface2);border:1px solid var(--border2)"></div> Planned</div>
+            <div class="legend-item"><div class="legend-swatch" style="opacity:0.45;background:var(--surface2);border:1px solid var(--border2)"></div> Future (locked)</div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-col">
+        <div class="card" id="dayDetailCard">
+          <div class="detail-empty">
+            <i class="ti ti-calendar-off"></i>
+            <p>Click a day to view or add workouts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Schedule tab -->
+    <div class="content" id="tabSchedule" style="display:none; flex-direction:column;">
+      <div class="schedule-card">
+        <div class="info-box"><i class="ti ti-info-circle" style="flex-shrink:0;margin-top:1px"></i> Set a workout for each day of the week. It will automatically repeat every week on the calendar. You can still override any specific day.</div>
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:16px">Your weekly template</div>
+        <div class="week-grid" id="weekGrid"></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearSchedule()" style="margin-top:4px"><i class="ti ti-trash"></i> Clear all</button>
+      </div>
+    </div>
+
+    <!-- All Workouts tab -->
+    <div class="content" id="tabWorkouts" style="display:none; flex-direction:column;">
+      <div id="workoutLibrary"></div>
+    </div>
+
+    <!-- Progress tab -->
+    <div class="content" id="tabProgress" style="display:none; flex-direction:column;">
+      <div id="progressView"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Workout Modal -->
+<div class="modal-backdrop" id="addWorkoutModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    <div class="modal-title" id="modalTitle">Plan a workout</div>
+
+    <div class="form-group">
+      <label class="form-label">Workout name</label>
+      <input class="form-input" type="text" id="wName" placeholder="e.g. Push day, Leg day, Morning run…">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="wDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration (min)</label>
+        <input class="form-input" type="number" id="wDuration" placeholder="60" min="1" max="300">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="wCategory">
+          <option>Strength</option>
+          <option>Cardio</option>
+          <option>HIIT</option>
+          <option>Yoga / Mobility</option>
+          <option>Sports</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Est. calories</label>
+        <input class="form-input" type="number" id="wCalories" placeholder="400" min="0">
+      </div>
+    </div>
+
+    <!-- Recurring toggle (hidden when editing template) -->
+    <div id="recurSection">
+      <div class="recur-toggle" onclick="toggleRecur()">
+        <div class="toggle-switch" id="recurSwitch"><div class="toggle-knob"></div></div>
+        <div class="recur-label"><strong>Repeat every week</strong><br><span style="font-size:11.5px">Also saves this workout to your weekly template</span></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Exercises</label>
+      <div class="exercise-builder">
+        <div class="exercise-builder-title">Added exercises</div>
+        <div id="exerciseEntries"></div>
+        <div class="add-ex-form">
+          <input type="text" id="exNameInput" placeholder="Exercise" onkeydown="if(event.key==='Enter')addExercise()">
+          <input type="number" id="exSetsInput" placeholder="Sets" style="width:60px" min="1" max="20">
+          <input type="number" id="exRepsInput" placeholder="Reps" style="width:60px" min="1" max="100">
+          <select id="exMuscleInput" style="width:110px">
+            <option value="">Muscle</option>
+            <option>Chest</option><option>Back</option><option>Shoulders</option>
+            <option>Arms</option><option>Legs</option><option>Core</option>
+            <option>Cardio</option><option>Full body</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="addExercise()"><i class="ti ti-plus"></i> Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorkout()" id="saveBtn"><i class="ti ti-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg">Done!</span></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────
+// overrides: { 'YYYY-MM-DD': { name, category, duration, calories, exercises, checkedIn, notes, isRecurring } }
+// schedule:  { 0..6: { name, category, duration, calories, exercises } }  (0=Mon … 6=Sun)
+const SK = 'gymlog_v2';
+let store = JSON.parse(localStorage.getItem(SK) || '{"overrides":{},"schedule":{}}');
+if (!store.overrides) store.overrides = {};
+if (!store.schedule) store.schedule = {};
+
+const today = new Date();
+const todayStr = fmt(today);
+let currentYear = today.getFullYear();
+let currentMonth = today.getMonth();
+let selectedDate = null;
+
+// modal state
+let modalExercises = [];
+let modalMode = 'day';   // 'day' | 'template'
+let modalDayOfWeek = null;
+let modalDateStr = null;
+let recurOn = false;
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+function fmt(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parseFmt(s) { return new Date(s + 'T12:00:00'); }
+function dow(ds) {
+  // 0=Mon … 6=Sun (matches our schedule keys)
+  const d = parseFmt(ds);
+  const jsDay = d.getDay(); // 0=Sun
+  return jsDay === 0 ? 6 : jsDay - 1;
+}
+function isPast(ds) { return ds <= todayStr; }
+function isFuture(ds) { return ds > todayStr; }
+function save() { localStorage.setItem(SK, JSON.stringify(store)); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+const COLORS = ['#7c6fe0','#a99ef5','#5a4fc7'];
+function pc(i) { return COLORS[i % COLORS.length]; }
+const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ─── Effective workout for a date ─────────────────────────────────────
+// Priority: override > schedule template > null
+function getWorkout(ds) {
+  if (store.overrides[ds] !== undefined) return store.overrides[ds]; // null means explicitly cleared
+  const d = dow(ds);
+  return store.schedule[d] || null;
+}
+function isOverridden(ds) { return store.overrides.hasOwnProperty(ds); }
+function isFromSchedule(ds) { return !isOverridden(ds) && !!store.schedule[dow(ds)]; }
+
+// ─── Calendar ──────────────────────────────────────────────────────────
+function renderCalendar() {
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  document.getElementById('monthTitle').textContent = MONTH_NAMES[currentMonth] + ' ' + currentYear;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  DAY_NAMES.forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'cal-header-cell';
+    h.textContent = d[0];
+    grid.appendChild(h);
+  });
+
+  let startDow = firstDay.getDay();
+  startDow = startDow === 0 ? 6 : startDow - 1;
+  for (let i = startDow - 1; i >= 0; i--) {
+    grid.appendChild(makeCell(new Date(currentYear, currentMonth, -i), true));
+  }
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    grid.appendChild(makeCell(new Date(currentYear, currentMonth, d), false));
+  }
+  let endDow = lastDay.getDay();
+  endDow = endDow === 0 ? 6 : endDow - 1;
+  for (let i = 1; i < 7 - endDow; i++) {
+    grid.appendChild(makeCell(new Date(currentYear, currentMonth + 1, i), true));
+  }
+
+  updateStats();
+  renderStreakDots();
+}
+
+function makeCell(date, otherMonth) {
+  const ds = fmt(date);
+  const cell = document.createElement('div');
+  cell.className = 'cal-day';
+  if (otherMonth) cell.classList.add('other-month');
+  if (ds === todayStr) cell.classList.add('today');
+  const wo = getWorkout(ds);
+  if (wo) {
+    cell.classList.add('has-workout');
+    if (wo.checkedIn) cell.classList.add('checked-in');
+  }
+  if (isFuture(ds) && !otherMonth) cell.classList.add('future-day');
+  if (ds === selectedDate) cell.classList.add('selected');
+  cell.textContent = date.getDate();
+  cell.onclick = () => selectDay(ds, date);
+  return cell;
+}
+
+function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); }
+function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+
+// ─── Day Detail ───────────────────────────────────────────────────────
+function selectDay(ds, date) {
+  selectedDate = ds;
+  renderCalendar();
+  renderDayDetail(ds, date);
+}
+
+function renderDayDetail(ds, date) {
+  const card = document.getElementById('dayDetailCard');
+  const wo = getWorkout(ds);
+  const dateLabel = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const future = isFuture(ds);
+  const fromSched = isFromSchedule(ds);
+
+  if (!wo) {
+    card.innerHTML = `
+      <div class="detail-header"><div class="detail-date">${dateLabel}</div></div>
+      <div class="detail-empty">
+        <i class="ti ti-dumbbell"></i>
+        <p>No workout planned${future ? ' — this day is in the future' : ''}</p>
+        ${!future ? `<button class="btn btn-primary btn-sm" onclick="openAddWorkout('${ds}',false)"><i class="ti ti-plus"></i> Plan workout</button>` : ''}
+      </div>`;
+    return;
+  }
+
+  const exRows = (wo.exercises || []).map((ex, i) => `
+    <div class="exercise-row">
+      <div class="ex-dot" style="background:${pc(i)}"></div>
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-detail">${ex.sets}×${ex.reps}</div>
+      ${ex.muscle ? `<div class="ex-muscle">${ex.muscle}</div>` : ''}
+    </div>`).join('');
+
+  const checkedInBadge = wo.checkedIn ? '<span class="badge badge-green" style="margin-top:4px;display:inline-flex"><i class="ti ti-check" style="font-size:11px;margin-right:3px"></i> Checked in</span>' : '';
+  const recurBadge = fromSched ? '<span class="tag tag-recurring"><i class="ti ti-repeat" style="font-size:11px"></i> Recurring</span>' : '';
+
+  let checkinHtml;
+  if (future) {
+    checkinHtml = `<div class="future-notice"><i class="ti ti-lock" style="flex-shrink:0"></i> Check-in unlocks on ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>`;
+  } else {
+    checkinHtml = `
+      <textarea class="notes-input" rows="2" placeholder="Notes (optional)…" onchange="saveNotes('${ds}',this.value)">${wo.notes||''}</textarea>
+      <button class="btn btn-green ${wo.checkedIn?'checked':''}" id="checkinBtn" onclick="toggleCheckin('${ds}',this)">
+        <i class="ti ti-map-pin"></i> ${wo.checkedIn ? 'Checked in ✓' : 'Check in'}
+      </button>`;
+  }
+
+  card.innerHTML = `
+    <div class="detail-header">
+      <div>
+        <div class="detail-date">${dateLabel}</div>
+        ${checkedInBadge}
+      </div>
+      ${!future ? `<button class="btn btn-ghost btn-sm" onclick="openAddWorkout('${ds}',false)"><i class="ti ti-edit"></i></button>` : ''}
+    </div>
+    <div class="workout-tags">
+      <span class="tag"><i class="ti ti-dumbbell" style="font-size:13px"></i> ${wo.name}</span>
+      ${wo.category ? `<span class="tag">${wo.category}</span>` : ''}
+      ${wo.duration ? `<span class="tag"><i class="ti ti-clock" style="font-size:13px"></i> ${wo.duration} min</span>` : ''}
+      ${wo.calories ? `<span class="tag"><i class="ti ti-flame" style="font-size:13px"></i> ~${wo.calories} kcal</span>` : ''}
+      ${recurBadge}
+    </div>
+    ${wo.exercises && wo.exercises.length ? `<div class="exercise-list">${exRows}</div>` : '<div style="color:var(--text3);font-size:13px;padding:8px 0">No exercises listed.</div>'}
+    <div class="checkin-area">${checkinHtml}</div>`;
+}
+
+function saveNotes(ds, val) {
+  if (!store.overrides[ds]) {
+    // promote from schedule to override so we can store notes
+    const base = store.schedule[dow(ds)] || {};
+    store.overrides[ds] = { ...base };
+  }
+  store.overrides[ds].notes = val;
+  save();
+}
+
+function toggleCheckin(ds, btn) {
+  if (isFuture(ds)) return; // hard lock
+  if (!store.overrides[ds]) {
+    // promote schedule entry to override
+    const base = store.schedule[dow(ds)] || {};
+    store.overrides[ds] = { ...JSON.parse(JSON.stringify(base)) };
+  }
+  store.overrides[ds].checkedIn = !store.overrides[ds].checkedIn;
+  save();
+  renderCalendar();
+  const checked = store.overrides[ds].checkedIn;
+  btn.classList.toggle('checked', checked);
+  btn.innerHTML = `<i class="ti ti-map-pin"></i> ${checked ? 'Checked in ✓' : 'Check in'}`;
+  // update badge
+  const dateDiv = document.querySelector('.detail-date');
+  if (dateDiv) {
+    const existing = dateDiv.parentElement.querySelector('.badge-green');
+    if (checked && !existing) {
+      const b = document.createElement('span');
+      b.className = 'badge badge-green';
+      b.style.cssText = 'margin-top:4px;display:inline-flex';
+      b.innerHTML = '<i class="ti ti-check" style="font-size:11px;margin-right:3px"></i> Checked in';
+      dateDiv.parentElement.appendChild(b);
+    } else if (!checked && existing) { existing.remove(); }
+  }
+  showToast(checked ? 'Checked in! 💪' : 'Check-in removed');
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────
+function openAddWorkout(ds, isTemplate, dayOfWeek) {
+  modalMode = isTemplate ? 'template' : 'day';
+  modalDayOfWeek = dayOfWeek !== undefined ? dayOfWeek : null;
+  modalDateStr = ds || selectedDate || todayStr;
+  recurOn = false;
+
+  let wo = null;
+  if (isTemplate && dayOfWeek !== undefined) {
+    wo = store.schedule[dayOfWeek] || null;
+    document.getElementById('modalTitle').textContent = 'Edit ' + DAY_NAMES[dayOfWeek] + ' template';
+    document.getElementById('recurSection').style.display = 'none';
+    document.getElementById('wDate').closest('.form-row').style.display = 'none';
+  } else {
+    wo = store.overrides[modalDateStr] || store.schedule[dow(modalDateStr)] || null;
+    document.getElementById('modalTitle').textContent = 'Plan a workout';
+    document.getElementById('recurSection').style.display = 'block';
+    document.getElementById('wDate').closest('.form-row').style.display = 'flex';
+  }
+
+  document.getElementById('wName').value = wo ? wo.name : '';
+  document.getElementById('wDate').value = modalDateStr;
+  document.getElementById('wDuration').value = wo ? (wo.duration || '') : '';
+  document.getElementById('wCalories').value = wo ? (wo.calories || '') : '';
+  const cat = document.getElementById('wCategory');
+  cat.selectedIndex = 0;
+  if (wo && wo.category) for (let i = 0; i < cat.options.length; i++) { if (cat.options[i].value === wo.category) { cat.selectedIndex = i; break; } }
+
+  // recur toggle
+  const sw = document.getElementById('recurSwitch');
+  sw.classList.remove('on');
+
+  modalExercises = wo ? JSON.parse(JSON.stringify(wo.exercises || [])) : [];
+  renderExEntries();
+  document.getElementById('addWorkoutModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('addWorkoutModal').classList.remove('open');
+  modalExercises = []; modalMode = 'day'; modalDayOfWeek = null; modalDateStr = null;
+  document.getElementById('exNameInput').value = '';
+  document.getElementById('exSetsInput').value = '';
+  document.getElementById('exRepsInput').value = '';
+  document.getElementById('exMuscleInput').selectedIndex = 0;
+}
+
+function toggleRecur() {
+  recurOn = !recurOn;
+  document.getElementById('recurSwitch').classList.toggle('on', recurOn);
+}
+
+function addExercise() {
+  const name = document.getElementById('exNameInput').value.trim();
+  if (!name) return;
+  const sets = parseInt(document.getElementById('exSetsInput').value) || 3;
+  const reps = parseInt(document.getElementById('exRepsInput').value) || 10;
+  const muscle = document.getElementById('exMuscleInput').value;
+  modalExercises.push({ name, sets, reps, muscle });
+  document.getElementById('exNameInput').value = '';
+  document.getElementById('exSetsInput').value = '';
+  document.getElementById('exRepsInput').value = '';
+  document.getElementById('exMuscleInput').selectedIndex = 0;
+  renderExEntries();
+  document.getElementById('exNameInput').focus();
+}
+
+function removeExercise(i) { modalExercises.splice(i, 1); renderExEntries(); }
+
+function renderExEntries() {
+  const el = document.getElementById('exerciseEntries');
+  if (!modalExercises.length) { el.innerHTML = '<div style="font-size:12.5px;color:var(--text3);padding:4px 0;">No exercises yet — add below.</div>'; return; }
+  el.innerHTML = modalExercises.map((ex, i) => `
+    <div class="ex-entry">
+      <div style="width:6px;height:6px;border-radius:50%;background:${pc(i)};flex-shrink:0;margin-top:2px"></div>
+      <div class="ex-entry-name">${ex.name}</div>
+      <div class="ex-entry-info">${ex.sets}×${ex.reps}${ex.muscle ? ' · '+ex.muscle : ''}</div>
+      <button class="btn-ghost" style="background:none;border:none;color:var(--red);cursor:pointer;padding:2px 4px;border-radius:4px" onclick="removeExercise(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button>
+    </div>`).join('');
+}
+
+function saveWorkout() {
+  const name = document.getElementById('wName').value.trim();
+  if (!name) { document.getElementById('wName').focus(); return; }
+  const ds = document.getElementById('wDate').value || modalDateStr;
+  const payload = {
+    name,
+    category: document.getElementById('wCategory').value,
+    duration: parseInt(document.getElementById('wDuration').value) || null,
+    calories: parseInt(document.getElementById('wCalories').value) || null,
+    exercises: modalExercises,
+  };
+
+  if (modalMode === 'template') {
+    // Save directly into schedule[dayOfWeek]
+    store.schedule[modalDayOfWeek] = payload;
+  } else {
+    // Save as override for the specific date
+    const existing = store.overrides[ds] || {};
+    store.overrides[ds] = { ...existing, ...payload };
+    // Also save to weekly template if toggle is on
+    if (recurOn) {
+      const d = dow(ds);
+      store.schedule[d] = { ...payload };
+      showToast('Saved + added to weekly template!');
+    } else {
+      showToast('Workout saved!');
+    }
+  }
+
+  save();
+  closeModal();
+  renderCalendar();
+  if (modalMode === 'template') {
+    renderScheduleTab();
+    showToast('Template saved — repeats every ' + DAY_NAMES[modalDayOfWeek]);
+  } else {
+    selectedDate = ds;
+    renderDayDetail(ds, parseFmt(ds));
+  }
+}
+
+// ─── Weekly Schedule Tab ──────────────────────────────────────────────
+function renderScheduleTab() {
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  DAY_NAMES.forEach((day, i) => {
+    const col = document.createElement('div');
+    col.className = 'day-col';
+    const lbl = document.createElement('div');
+    lbl.className = 'day-col-label';
+    lbl.textContent = day;
+    col.appendChild(lbl);
+
+    const slot = document.createElement('div');
+    const tmpl = store.schedule[i];
+    if (tmpl) {
+      slot.className = 'day-slot has-template';
+      slot.innerHTML = `<div class="day-slot-name">${tmpl.name}</div><div style="font-size:9px;color:var(--accent-light)">${tmpl.category||''}${tmpl.duration?' · '+tmpl.duration+'min':''}</div>`;
+      const del = document.createElement('button');
+      del.className = 'day-slot-del';
+      del.innerHTML = '<i class="ti ti-x"></i>';
+      del.onclick = (e) => { e.stopPropagation(); clearDayTemplate(i); };
+      slot.appendChild(del);
+      slot.onclick = () => openAddWorkout(null, true, i);
+    } else {
+      slot.className = 'day-slot rest';
+      slot.innerHTML = '<i class="ti ti-plus" style="font-size:14px;margin-bottom:2px"></i><div style="font-size:10px">Rest day</div>';
+      slot.onclick = () => openAddWorkout(null, true, i);
+    }
+    col.appendChild(slot);
+    grid.appendChild(col);
+  });
+}
+
+function clearDayTemplate(i) {
+  delete store.schedule[i];
+  save();
+  renderScheduleTab();
+  renderCalendar();
+  showToast(DAY_NAMES[i] + ' template cleared');
+}
+
+function clearSchedule() {
+  if (!confirm('Clear the entire weekly template?')) return;
+  store.schedule = {};
+  save();
+  renderScheduleTab();
+  renderCalendar();
+  showToast('Weekly template cleared');
+}
+
+// ─── Stats & Streak ───────────────────────────────────────────────────
+function updateStats() {
+  // Collect all days that have a workout (override or schedule)
+  const allOverrides = Object.keys(store.overrides).filter(k => store.overrides[k]);
+  const checkedIn = allOverrides.filter(k => store.overrides[k].checkedIn);
+  const ym = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+  document.getElementById('statMonth').textContent = checkedIn.filter(k => k.startsWith(ym)).length;
+  document.getElementById('statTotal').textContent = checkedIn.length;
+
+  let streak = 0;
+  const d = new Date(today);
+  for (let i = 0; i < 365; i++) {
+    const ds = fmt(d);
+    const wo = getWorkout(ds);
+    if (wo && wo.checkedIn) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+
+  const totalPlanned = allOverrides.length;
+  document.getElementById('statRate').textContent = totalPlanned > 0 ? Math.round(checkedIn.length/totalPlanned*100)+'%' : '—';
+}
+
+function renderStreakDots() {
+  const container = document.getElementById('streakDots');
+  container.innerHTML = '';
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - mondayOffset + i);
+    const ds = fmt(d);
+    const wo = getWorkout(ds);
+    const col = document.createElement('div');
+    col.className = 'streak-col';
+    const dot = document.createElement('div');
+    const done = wo && wo.checkedIn;
+    dot.className = 'streak-dot' + (done ? ' done' : '');
+    dot.innerHTML = done ? '<i class="ti ti-check" style="font-size:9px"></i>' : DAY_NAMES[i][0];
+    const lbl = document.createElement('div');
+    lbl.className = 'streak-day';
+    lbl.textContent = DAY_NAMES[i][0];
+    col.appendChild(dot); col.appendChild(lbl);
+    container.appendChild(col);
+  }
+}
+
+// ─── All Workouts Tab ─────────────────────────────────────────────────
+function renderWorkoutsTab() {
+  const el = document.getElementById('workoutLibrary');
+  const keys = Object.keys(store.overrides).filter(k => store.overrides[k]).sort().reverse();
+  if (!keys.length) {
+    el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text3)"><i class="ti ti-dumbbell" style="font-size:48px;display:block;margin-bottom:12px"></i><p style="font-size:15px">No workouts logged yet. Hit "Add workout" to start!</p></div>';
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${
+    keys.map(ds => {
+      const wo = store.overrides[ds];
+      const date = parseFmt(ds);
+      const dateLabel = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const future = isFuture(ds);
+      return `<div class="card" style="cursor:pointer;${future?'opacity:0.55':''}" onclick="switchToDay('${ds}')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:2px">${wo.name}</div>
+            <div style="font-size:12px;color:var(--text3)">${dateLabel}</div>
+          </div>
+          ${future ? '<span class="badge badge-amber"><i class="ti ti-lock" style="font-size:10px;margin-right:3px"></i>Future</span>' : wo.checkedIn ? '<span class="badge badge-green"><i class="ti ti-check" style="font-size:11px;margin-right:3px"></i>Done</span>' : '<span class="badge badge-purple">Planned</span>'}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
+          ${wo.category ? `<span class="tag" style="font-size:11px">${wo.category}</span>` : ''}
+          ${wo.duration ? `<span class="tag" style="font-size:11px">${wo.duration}min</span>` : ''}
+          ${wo.exercises && wo.exercises.length ? `<span class="tag" style="font-size:11px">${wo.exercises.length} exercises</span>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="event.stopPropagation();deleteWorkout('${ds}')"><i class="ti ti-trash"></i> Delete</button>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function deleteWorkout(ds) {
+  if (!confirm('Delete this workout?')) return;
+  delete store.overrides[ds];
+  save();
+  renderWorkoutsTab();
+  renderCalendar();
+  showToast('Workout deleted');
+}
+
+function switchToDay(ds) {
+  switchTab('calendar');
+  selectedDate = ds;
+  const d = parseFmt(ds);
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth();
+  renderCalendar();
+  renderDayDetail(ds, d);
+}
+
+// ─── Progress Tab ─────────────────────────────────────────────────────
+function renderProgressTab() {
+  const el = document.getElementById('progressView');
+  const keys = Object.keys(store.overrides).filter(k => store.overrides[k]).sort();
+  if (!keys.length) {
+    el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text3)"><i class="ti ti-chart-bar" style="font-size:48px;display:block;margin-bottom:12px"></i><p>Log some workouts to see your progress!</p></div>';
+    return;
+  }
+  const monthly = {};
+  keys.forEach(ds => {
+    const mo = ds.slice(0,7);
+    if (!monthly[mo]) monthly[mo] = { planned: 0, done: 0 };
+    monthly[mo].planned++;
+    if (store.overrides[ds].checkedIn) monthly[mo].done++;
+  });
+  const moKeys = Object.keys(monthly).sort().slice(-6);
+  const maxVal = Math.max(...moKeys.map(m => monthly[m].planned), 1);
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const bars = moKeys.map(mo => {
+    const { planned, done } = monthly[mo];
+    const [y, m] = mo.split('-');
+    const label = MN[parseInt(m)-1] + ' ' + y.slice(2);
+    const dH = Math.round((done/maxVal)*100);
+    const pH = Math.round((planned/maxVal)*100);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+      <div style="font-size:11px;color:var(--text3)">${done}/${planned}</div>
+      <div style="width:32px;height:120px;background:var(--surface2);border-radius:6px;position:relative">
+        <div style="width:100%;height:${pH}%;background:var(--surface3);border-radius:6px;position:absolute;bottom:0"></div>
+        <div style="width:100%;height:${dH}%;background:var(--accent);border-radius:6px;position:absolute;bottom:0"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);writing-mode:vertical-rl;transform:rotate(180deg);height:44px;white-space:nowrap">${label}</div>
+    </div>`;
+  }).join('');
+
+  const cats = {};
+  keys.filter(k => store.overrides[k].checkedIn).forEach(k => {
+    const c = store.overrides[k].category || 'Other';
+    cats[c] = (cats[c]||0) + 1;
+  });
+  const catTotal = Object.values(cats).reduce((a,b)=>a+b,0)||1;
+  const CC = ['#7c6fe0','#3ecf8e','#f59e0b','#ef4444','#a99ef5','#5a4fc7'];
+  const catRows = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,cnt],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="width:10px;height:10px;border-radius:2px;background:${CC[i%CC.length]};flex-shrink:0"></div>
+      <div style="flex:1;font-size:13px">${cat}</div>
+      <div style="font-size:13px;color:var(--text2)">${cnt}</div>
+      <div style="width:80px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;background:${CC[i%CC.length]};border-radius:3px;width:${Math.round(cnt/catTotal*100)}%"></div>
+      </div>
+    </div>`).join('');
+
+  const checkedIn = keys.filter(k => store.overrides[k].checkedIn);
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="text-align:center"><div class="stat-mini-num" style="font-size:32px">${checkedIn.length}</div><div class="stat-mini-sub" style="margin-top:6px">Total sessions completed</div></div>
+      <div class="card" style="text-align:center"><div class="stat-mini-num" style="font-size:32px">${keys.length > 0 ? Math.round(checkedIn.length/keys.length*100) : 0}%</div><div class="stat-mini-sub" style="margin-top:6px">Overall completion rate</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:16px">Monthly overview</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;justify-content:center">${bars||'<div style="color:var(--text3);font-size:13px">Not enough data yet</div>'}</div>
+        <div style="display:flex;gap:12px;margin-top:14px;font-size:11.5px;color:var(--text3)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent);margin-right:4px"></span>Checked in</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--surface3);margin-right:4px"></span>Planned</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:8px">By category</div>
+        ${catRows||'<div style="color:var(--text3);font-size:13px;padding:16px 0">No completed workouts yet.</div>'}
+      </div>
+    </div>`;
+}
+
+// ─── Tab Switching ────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['tabCalendar','tabSchedule','tabWorkouts','tabProgress'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const tabs = { calendar: 0, schedule: 1, workouts: 2, progress: 3 };
+  document.querySelectorAll('.nav-item')[tabs[tab]].classList.add('active');
+  const titles = {
+    calendar:  ['Calendar', 'Track and check in to your workouts'],
+    schedule:  ['Weekly schedule', 'Set recurring workouts for each day of the week'],
+    workouts:  ['All workouts', 'Every session you have planned or completed'],
+    progress:  ['Progress', 'Your training history at a glance'],
+  };
+  document.getElementById('topTitle').textContent = titles[tab][0];
+  document.getElementById('topSub').textContent = titles[tab][1];
+  if (tab === 'calendar') { document.getElementById('tabCalendar').style.display = 'flex'; }
+  else if (tab === 'schedule') { document.getElementById('tabSchedule').style.display = 'flex'; renderScheduleTab(); }
+  else if (tab === 'workouts') { document.getElementById('tabWorkouts').style.display = 'flex'; renderWorkoutsTab(); }
+  else if (tab === 'progress') { document.getElementById('tabProgress').style.display = 'flex'; renderProgressTab(); }
+}
+
+document.getElementById('addWorkoutModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────
+document.getElementById('wDate').value = todayStr;
+renderCalendar();
+</script>
+</body>
+</html>
+\
